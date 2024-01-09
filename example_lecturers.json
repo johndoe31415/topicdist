@@ -1,0 +1,8 @@
+{
+	"Viertes Thema": {
+		"max_topics": 1
+	},
+	"Fünftes Thema": {
+		"exclude": [ "studi567@student.dhbw-mannheim.de" ]
+	}
+}

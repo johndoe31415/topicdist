@@ -1,0 +1,23 @@
+[
+	{
+		"anrede": "Frau",
+		"kurs": "MA-TINF23CS1",
+		"mail-dh": "studi123@student.dhbw-mannheim.de",
+		"nachname": "Merkel",
+		"vorname": "Angela"
+	},
+	{
+		"anrede": "Herr",
+		"kurs": "MA-TINF23CS1",
+		"mail-dh": "studi456@student.dhbw-mannheim.de",
+		"nachname": "Delacroix",
+		"vorname": "Jean-Baptiste"
+	},
+	{
+		"anrede": "Herr",
+		"kurs": "MA-TINF23CS1",
+		"mail-dh": "studi567@student.dhbw-mannheim.de",
+		"nachname": "Ohnein",
+		"vorname": "Ichhabdiedeadlineverpasst"
+	}
+]

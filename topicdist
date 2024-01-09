@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+#	topicdist - Topic distribution among multiple lecturers
+#	Copyright (C) 2023-2024 Johannes Bauer
+#
+#	This file is part of topicdist.
+#
+#	topicdist is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; this program is ONLY licensed under
+#	version 3 of the License, later versions are explicitly excluded.
+#
+#	topicdist is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with topicdist; if not, write to the Free Software
+#	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#	Johannes Bauer <JohannesBauer@gmx.de>
+
+import sys
+from FriendlyArgumentParser import FriendlyArgumentParser
+from TopicDistributor import TopicDistributor
+
+parser = FriendlyArgumentParser(description = "Distribute topics among multiple lecturers fairly.")
+parser.add_argument("-l", "--lecturer-json", metavar = "filename", help = "JSON file with metadata about lecturers (email addresses, exclusions).")
+parser.add_argument("-n", "--attempt-count", metavar = "count", type = int, default = 1000, help = "Number of times to try to assign students until optimal score is found. Defaults to %(default)d.")
+parser.add_argument("-s", "--student-json", metavar = "filename", action = "append", default = [ ], help = "Specifies JSON file(s) that contain student lists (so that those students are also included which did not specify any preferences). Defaults to %(default)s.")
+parser.add_argument("-o", "--output-file", metavar = "filename", default = "assignments.json", help = "Assignment JSON output file to be written. Defaults to %(default)s.")
+parser.add_argument("-v", "--verbose", action = "count", default = 0, help = "Increases verbosity. Can be specified multiple times to increase.")
+parser.add_argument("preference_csv", nargs = "+", help = "CSV(s) of student preferences.")
+args = parser.parse_args(sys.argv[1:])
+
+best_distribution = None
+for run in range(args.attempt_count):
+	topic_distributor = TopicDistributor(args)
+	distribution = topic_distributor.run()
+	if (best_distribution is None) or (distribution.score > best_distribution.score):
+		best_distribution = distribution
+
+if args.verbose >= 1:
+	best_distribution.dump()
+best_distribution.write(args.output_file)
