@@ -27,6 +27,7 @@ import functools
 import datetime
 import collections
 from PreferenceCSV import PreferenceCSV
+from PreferenceMatrix import PreferenceMatrix
 
 class FinishedDistribution():
 	def __init__(self, assignments_by_topic, prefs, lecturers):
@@ -171,33 +172,48 @@ class TopicDistributor():
 		else:
 			return self.default_max_assignments_per_lecturer
 
+	def _build_lecture_list(self):
+		lecture_list = [ ]
+		remaining_lecturers = self._prefs.topic_count
+		remaining_students = self._prefs.student_count
+
+		# Fixed assignments first
+		for (topic, lecturer) in self._lecturers.items():
+			if "max_topics" in lecturer:
+				remaining_lecturers -= 1
+				remaining_students -= lecturer["max_topics"]
+				lecture_list += [ topic ] * lecturer["max_topics"]
+
+		# Variable assignments thereafter, choose Bresenham-type interpolation
+		# (fractional topics_per_lecturer)
+		topics_per_lecturer = remaining_students / remaining_lecturers
+		for (topic, lecturer) in self._lecturers.items():
+			if "max_topics" not in lecturer:
+				assign_count = round(remaining_students) - round(remaining_students - topics_per_lecturer)
+				remaining_students -= topics_per_lecturer
+				lecture_list += [ topic ] * assign_count
+
+		return lecture_list
+
+	def _build_student_lecture_matrix(self):
+		student_list = self._prefs.randomized_student_list()
+		lecture_list = self._build_lecture_list()
+		pmatrix = PreferenceMatrix(student_list, lecture_list)
+		for student in self._prefs:
+			for (topic, pref) in student.prefs.items():
+				pmatrix.set_preference(student.email, topic, pref)
+
+		for (topic, lecturer) in self._lecturers.items():
+			if "exclude" in lecturer:
+				for exclusion_student_email in lecturer["exclude"]:
+					pmatrix.set_preference(exclusion_student_email, topic, -99999999)
+		return pmatrix
+
 	def run(self):
 		self._assignments_by_topic = collections.defaultdict(list)
 		self._unassigned_students = set(student_email for student_email in self._prefs.students)
 		self._topic_assignment_count = collections.Counter({ topic: 0 for topic in self._prefs.topics })
-		student_list = self._prefs.randomized_student_list()
 
-		# Try to match preferences first
-		for preference_value in range(3, 0, -1):
-			for student_email in student_list:
-				if student_email not in self._unassigned_students:
-					# Student already assigned!
-					continue
-
-				# Does this student want a particular topic with this preference value?
-				topic = self._prefs.get_student_preference(student_email, preference_value)
-				if topic is None:
-					# No preference.
-					continue
-				self.assign_if_possible(student_email, topic)
-
-		# Assign remaining students to those who have the least work so far
-		#print(f"Have {len(self._unassigned_students)} students unassigned so far which are going to be assigned.")
-		for student_email in list(self._unassigned_students):
-			for (topic, assignment_count) in reversed(self._topic_assignment_count.items()):
-				if self.assign_if_possible(student_email, topic):
-					break
-			else:
-				print(f"Unable to assign student: {student_email}")
-		assert(len(self._unassigned_students) == 0)
-		return FinishedDistribution(self._assignments_by_topic, self._prefs, self._lecturers)
+		pmatrix = self._build_student_lecture_matrix()
+		assignments_by_topic = pmatrix.assign()
+		return FinishedDistribution(assignments_by_topic, self._prefs, self._lecturers)
