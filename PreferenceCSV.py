@@ -72,6 +72,21 @@ class PreferenceCSV():
 		return preference_csv
 
 	@classmethod
+	def _sanitize_prefs(cls, student_name: str, prefs: dict):
+		# Each topic may appear only once and scores 1, 2, and 3 may appear
+		if (len(prefs) == 3) and (set(prefs.values()) == set([1, 2, 3])):
+			return prefs
+		else:
+			print(f"Warning: topic distribution of {student_name} does not follow convention and was automatically adapted.")
+			changed_prefs = { }
+			have_prefs = set()
+			for (topic, pref) in prefs.items():
+				if (pref not in have_prefs) and (1 <= pref <= 3):
+					have_prefs.add(pref)
+					changed_prefs[topic] = pref
+			return changed_prefs
+
+	@classmethod
 	def load_from_file(cls, filename: str):
 		preference_csv = PreferenceCSV()
 
@@ -87,6 +102,7 @@ class PreferenceCSV():
 					student_prefs = [ int(pref) for pref in student_prefs ]
 					student_prefs = { topic: pref for (topic, pref) in zip(topics, student_prefs) }
 					student_prefs = { topic: pref for (topic, pref) in student_prefs.items() if pref != 0 }
+					student_prefs = cls._sanitize_prefs(student_name, student_prefs)
 					preference_csv.add_student(student_name, student_email, student_prefs)
 		return preference_csv
 
