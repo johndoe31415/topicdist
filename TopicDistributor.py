@@ -187,7 +187,8 @@ class TopicDistributor():
 		# Variable assignments thereafter, choose Bresenham-type interpolation
 		# (fractional topics_per_lecturer)
 		topics_per_lecturer = remaining_students / remaining_lecturers
-		for (topic, lecturer) in self._lecturers.items():
+		for topic in self._prefs.randomized_topic_list():
+			lecturer = self._lecturers.get(topic, { })
 			if "max_topics" not in lecturer:
 				assign_count = round(remaining_students) - round(remaining_students - topics_per_lecturer)
 				remaining_students -= topics_per_lecturer
