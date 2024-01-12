@@ -63,7 +63,8 @@ class FinishedDistribution():
 		print("Student assignments:")
 		for student in sorted(self._prefs):
 			topic = self.assignments_by_student[student.email]
-			pref = student.prefs.get(topic, 0)
+			pref = student.prefs.get(topic, 0) if (len(student.prefs) > 0) else "-"
+
 			name_email = f"{student.name} <{student.email}>"
 			print(f"{name_email:<70s} [{pref}] {topic}")
 		print()
@@ -73,7 +74,7 @@ class FinishedDistribution():
 			print(f"   {topic} ({len(assigned_emails)})")
 			for student in sorted(self._prefs.get_students(assigned_emails)):
 				name_email = f"{student.name} <{student.email}>"
-				pref = student.prefs.get(topic, 0)
+				pref = student.prefs.get(topic, 0) if (len(student.prefs) > 0) else "-"
 				print(f"        [{pref}] {name_email}")
 		print()
 
